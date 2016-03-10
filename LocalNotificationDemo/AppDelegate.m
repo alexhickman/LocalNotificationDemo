@@ -17,7 +17,70 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    
+    UIUserNotificationSettings *notificationSettings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeBadge | UIUserNotificationTypeAlert | UIUserNotificationTypeSound categories:nil];
+    [[UIApplication sharedApplication] registerUserNotificationSettings:notificationSettings];
+    
+    [self generateLocalNotification];
+    
     return YES;
+}
+
+- (void)generateLocalNotification
+{
+    UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+    localNotification.fireDate = [[NSDate alloc]initWithTimeIntervalSinceNow:15];
+    localNotification.alertBody = @"My First Local Notification";
+    localNotification.applicationIconBadgeNumber = 3;
+    localNotification.soundName = UILocalNotificationDefaultSoundName;
+    localNotification.userInfo = @{@"id" : @42};
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+    
+}
+
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+{
+    if (application.applicationState == UIApplicationStateActive)
+    {
+        // inside app
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Notification" message:notification.alertBody preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction *ignoreAction = [UIAlertAction actionWithTitle:@"Ignore" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            NSLog(@"Ignore");
+        }];
+        UIAlertAction *viewAction = [UIAlertAction actionWithTitle:@"View" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            [self takeActionWithLocalNotification:notification];
+        }];
+        
+        [alertController addAction:ignoreAction];
+        [alertController addAction:viewAction];
+        
+        [self.window.rootViewController presentViewController:alertController animated:YES completion:^{
+        }];
+        
+    }
+    else
+    {
+        // outside app
+        [self takeActionWithLocalNotification:notification];
+    }
+}
+
+- (void)takeActionWithLocalNotification:(UILocalNotification *)localNotification
+{
+    NSNumber *notification_id = localNotification.userInfo[@"id"];
+    
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Action Taken" message:[NSString stringWithFormat:@"We are viewing notification %@", notification_id] preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        NSLog(@"OK");
+    }];
+    
+    [alertController addAction:okAction];
+    
+    [self.window.rootViewController presentViewController:alertController animated:YES completion:^{
+        // do a thing
+    }];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
